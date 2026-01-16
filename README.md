@@ -17,6 +17,8 @@ $ solana-test-validator -l /tmp/solana-ledger
 $ anchor deploy
 # Program Id: GS5XPyzsXRec4sQzxJSpeDYHaTnZyYt5BtpeNXYuH1SM
 
+$ python tests/pxsol-ss-anchor.py init
+
 $ python tests/pxsol-ss-anchor.py update "The quick brown fox jumps over the lazy dog"
 $ python tests/pxsol-ss-anchor.py load
 # The quick brown fox jumps over the lazy dog
