@@ -25,8 +25,6 @@ pub mod pxsol_ss_anchor {
     pub fn update(ctx: Context<Update>, data: Vec<u8>) -> Result<()> {
         let account_user = &ctx.accounts.user;
         let account_user_pda = &mut ctx.accounts.user_pda;
-        // Authorization: only the stored authority can update.
-        require_keys_eq!(account_user_pda.auth, account_user.key(), PxsolError::Unauthorized);
         // At this point, Anchor has already reallocated the account according to the `realloc = ...` constraint
         // (using `new_data.len()`), pulling extra lamports from auth if needed to maintain rent-exemption.
         account_user_pda.data = data;
