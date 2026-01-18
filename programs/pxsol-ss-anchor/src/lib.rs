@@ -1,51 +1,36 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program;
 
-// Program ID embedded by the `declare_id!` macro for on-chain and client-side verification.
 declare_id!("GS5XPyzsXRec4sQzxJSpeDYHaTnZyYt5BtpeNXYuH1SM");
 
 #[program]
 pub mod pxsol_ss_anchor {
     use super::*;
 
-    /// Initialize a user-specific PDA account.
     pub fn init(ctx: Context<Init>) -> Result<()> {
         let account_user = &ctx.accounts.user;
         let account_user_pda = &mut ctx.accounts.user_pda;
-        // Record the authority as the caller's public key; subsequent updates require this authority's signature.
         account_user_pda.auth = account_user.key();
-        // Anchor-generated bump value used to uniquely identify the PDA.
         account_user_pda.bump = ctx.bumps.user_pda;
-        // Initialize business data as an empty vector.
         account_user_pda.data = Vec::new();
         Ok(())
     }
 
-    /// Update the business data in the user's PDA.
     pub fn update(ctx: Context<Update>, data: Vec<u8>) -> Result<()> {
         let account_user = &ctx.accounts.user;
         let account_user_pda = &mut ctx.accounts.user_pda;
-        // At this point, Anchor has already reallocated the account according to the `realloc = ...` constraint
-        // (using `new_data.len()`), pulling extra lamports from auth if needed to maintain rent-exemption.
+
+        // Update the data field with the new data.
         account_user_pda.data = data;
+
         // If the account was shrunk, Anchor won't automatically refund excess lamports. Refund any surplus (over the
         // new rent-exempt minimum) back to the user.
         let account_user_pda_info = account_user_pda.to_account_info();
-        let rent = Rent::get()?;
-        let rent_exemption = rent.minimum_balance(account_user_pda_info.data_len());
+        let rent_exemption = Rent::get()?.minimum_balance(account_user_pda_info.data_len());
         let hold = **account_user_pda_info.lamports.borrow();
         if hold > rent_exemption {
             let refund = hold.saturating_sub(rent_exemption);
-            // Transfer lamports from PDA to user using the PDA as signer.
-            let signer_seeds: &[&[u8]] = &[SEED, account_user.key.as_ref(), &[account_user_pda.bump]];
-            let signer = &[signer_seeds];
-            let cpictx = CpiContext::new_with_signer(
-                ctx.accounts.system_program.to_account_info(),
-                system_program::Transfer { from: account_user_pda_info.clone(), to: account_user.to_account_info() },
-                signer,
-            );
-            // It's okay if refund equals current - min_rent; system program enforces balances.
-            system_program::transfer(cpictx, refund)?;
+            **account_user_pda_info.lamports.borrow_mut() = rent_exemption;
+            **account_user.lamports.borrow_mut() = account_user.lamports().checked_add(refund).unwrap();
         }
         Ok(())
     }
