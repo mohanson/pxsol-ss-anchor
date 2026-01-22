@@ -7,6 +7,7 @@ This is an Anchor version of [pxsol simple storage](https://github.com/mohanson/
 Run typescript tests:
 
 ```sh
+$ anchor keys sync
 $ anchor test
 ```
 
