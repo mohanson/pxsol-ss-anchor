@@ -11,6 +11,23 @@ $ anchor keys sync
 $ anchor test
 ```
 
+if you have this error, `error Command "ts-mocha" not found.`, you can install it with:
+
+```sh
+yarn install
+```
+
+if you have this error, it indicates that your Solana local environment has already been started，so you can add the `--skip-local-validator` flag to skip starting a local validator.
+```sh
+Error: Your configured rpc port: 8899 is already in use
+```
+
+use this command:
+```sh
+$ anchor test --skip-local-validator
+```
+
+
 Deployed on the local test chain and interacted with via Python script:
 
 ```sh
